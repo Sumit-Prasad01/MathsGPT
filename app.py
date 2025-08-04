@@ -327,20 +327,20 @@ def main():
             4. Copy and paste it in the sidebar
             """)
             
-        with col2:
-            st.markdown("""
-            ### 🛠️ Fix Pandas Installation:
-            ```bash
-            # Uninstall pandas completely
-            pip uninstall pandas -y
+        # with col2:
+        #     st.markdown("""
+        #     ### 🛠️ Fix Pandas Installation:
+        #     ```bash
+        #     # Uninstall pandas completely
+        #     pip uninstall pandas -y
             
-            # Clear cache
-            pip cache purge
+        #     # Clear cache
+        #     pip cache purge
             
-            # Reinstall pandas
-            pip install pandas
-            ```
-            """)
+        #     # Reinstall pandas
+        #     pip install pandas
+        #     ```
+        #     """)
         
         st.markdown("""
         ### ✨ Features Available:
