@@ -67,4 +67,4 @@ Then open [http://localhost:8501](http://localhost:8501) in your browser.
   - "Analyze data trends in sales by month"
 
 ---
-
+# Streamlit App Link - https://sumit-prasad01-mathsgpt-app-w2rsdc.streamlit.app/
