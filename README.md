@@ -1,62 +1,70 @@
-# Text to Math Problem Solver and Data Search Assistant
+# 🧮 Math Problem Solver & Research Assistant
 
-This is a Streamlit application that acts as a **math problem-solving assistant**. It uses a **LangChain agent powered by Groq's Gemma2-9b-It model** to answer complex questions by leveraging specialized tools for calculation, reasoning, and data searching.
+This is a powerful Streamlit-based AI assistant that can solve complex mathematical problems, provide logical reasoning, search the web, analyze data, and fetch factual information using Wikipedia and DuckDuckGo.
 
-The application is built with a clean, object-oriented structure, making it easy to understand and extend.
+It integrates Groq's LLMs with LangChain agents and tools to offer real-time interactive problem-solving with step-by-step explanations.
 
 ---
 
 ## 🚀 Features
 
-- **Intelligent Agent**: Utilizes a LangChain agent to break down user queries.
-- **Multi-tool Capability**: The agent can use the following tools:
-  - **Calculator**: Solves complex mathematical expressions.
-  - **Wikipedia**: Searches for factual information on the web.
-  - **Reasoning Tool**: Provides logical, point-wise explanations for math problems.
-- **Groq Integration**: Uses the fast and efficient **Gemma2-9b-It** language model from Groq.
-- **Streamlit UI**: Provides a simple and interactive chat interface for users to ask questions.
+- **Advanced Calculations** – Solve arithmetic, algebra, calculus, and other math problems.
+- **Step-by-Step Reasoning** – Get detailed, logical explanations to problems.
+- **Web Search** – Real-time information using DuckDuckGo.
+- **Wikipedia Integration** – Quick access to encyclopedic knowledge.
+- **Data Analysis** – Framework to process and suggest data insights (requires `pandas`).
+- **Enhanced Calculator** – Supports `numexpr` for secure and complex math evaluation.
+- **Interactive Chat Interface** – Built with Streamlit and stateful memory.
 
 ---
 
 ## 📦 Prerequisites
 
-Before running the application, ensure you have the following installed:
-
 - Python 3.8+
-- A valid **Groq API key**
+- A valid **Groq API key** ([Get it here](https://console.groq.com/keys))
 
 ---
 
 ## 🛠️ Installation
 
-Clone this repository (if applicable) or save the Python code to a file named `app.py`.
-
-Install the required Python packages using pip:
-
 ```bash
-pip install streamlit langchain langchain-groq langchain_community
+pip install streamlit langchain langchain-groq langchain_community pandas numexpr validators
 ```
 
-#💡 Usage
-- On the sidebar, enter your Groq API Key.
+---
 
-- In the text area, type your math question or any query that requires calculation or data search.
+## ▶️ Running the App
 
-- Click the "Find my answer" button.
+```bash
+streamlit run math_assistant_fixed.py
+```
 
-- The application will process your request and display a detailed, point-wise response in the chat window.
+Then open [http://localhost:8501](http://localhost:8501) in your browser.
 
-# Code Structure
-The application logic is encapsulated in the MathAssistantApp class using an Object-Oriented Programming (OOP) approach:
+---
 
-- __init__(): Initializes the Streamlit UI, gets the API key, and sets up the LangChain agent.
+## 🧠 Code Structure
 
-- _setup_tools(): A private method that defines and returns the list of tools (Wikipedia, Calculator, Reasoning Tool).
+- `initialize_session_state()` – Sets initial app memory.
+- `setup_ui()` – Builds the Streamlit layout and sidebars.
+- `get_groq_api_key()` – Configures API credentials and model settings.
+- `create_enhanced_calculator_tool()` – Safe evaluation of expressions.
+- `create_data_analysis_tool()` – Simulated data insights using pandas.
+- `create_tools()` – Registers all LangChain tools.
+- `initialize_agent_and_llm()` – Loads model and tools as a LangChain agent.
+- `validate_input()` – Checks user queries for safety and completeness.
+- `main()` – App entry point. Manages flow and UI interactions.
 
-- _setup_agent(): A private method that initializes and returns the LangChain agent with the configured tools and LLM.
+---
 
-- _display_chat_history(): Renders all messages stored in the st.session_state.
+## 💬 Usage Tips
 
-- _handle_user_input(): Manages user input, calls the agent, and updates the chat history with the response.
+- Use clear and structured queries for best results.
+- Ask for "step-by-step" to get detailed reasoning.
+- Example prompts:
+  - "Calculate the integral of x^2"
+  - "What is the capital of France?"
+  - "Analyze data trends in sales by month"
 
-- run(): The main entry point that runs the application, calling all display and input methods.
+---
+
