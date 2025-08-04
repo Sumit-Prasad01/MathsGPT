@@ -1,100 +1,130 @@
 import streamlit as st
 from langchain_groq import ChatGroq
-from langchain.prompts import PromptTemplate
 from langchain.chains import LLMMathChain, LLMChain
+from langchain.prompts import PromptTemplate
 from langchain_community.utilities import WikipediaAPIWrapper
-from langchain.agents import Tool, initialize_agent
 from langchain.agents.agent_types import AgentType
+from langchain.agents import Tool, initialize_agent
 from langchain.callbacks import StreamlitCallbackHandler
 
-
 class MathAssistantApp:
+    """
+    A Streamlit application for a math problem-solving assistant using LangChain and Groq.
+
+    This class encapsulates all the logic for setting up the LLM, tools, and agent,
+    as well as rendering the Streamlit UI and handling user interactions.
+    """
+
     def __init__(self):
-        self._setup_ui()
-        self.groq_api_key = self._get_api_key()
+        """Initializes the Streamlit app, API key, LLM, and agent."""
+        st.set_page_config(page_title="Text To Math Problem Solver And Data Search Assistant", page_icon="🧮")
+        st.title("Text To Math Problem Solver Using Google Gemma 2")
+
+        # Get the Groq API key from the sidebar
+        self.groq_api_key = st.sidebar.text_input(label="Groq API Key", type="password")
+
+        # Stop the app if the API key is not provided
         if not self.groq_api_key:
             st.info("Please add your Groq API key to continue.")
             st.stop()
 
+        # Initialize the language model
         self.llm = ChatGroq(model="Gemma2-9b-It", groq_api_key=self.groq_api_key)
-        self.agent = self._initialize_agent()
-        self._initialize_chat_history()
 
-    def _setup_ui(self):
-        st.set_page_config(page_title="Text To Math Problem Solver And Data Search Assistant", page_icon="🧮")
-        st.title("Text To Math Problem Solver Using Google Gemma 2")
+        # Initialize session state for chat messages
+        if "messages" not in st.session_state:
+            st.session_state.messages = [
+                {"role": "assistant", "content": "Hi, I'm a Math chatbot who can answer all your maths questions."}
+            ]
+        
+        # Setup the agent with its tools
+        self.agent = self._setup_agent()
 
-    def _get_api_key(self):
-        return st.sidebar.text_area("Groq API Key", type='password')
-
-    def _initialize_agent(self):
+    def _setup_tools(self):
+        """Sets up and returns a list of tools for the agent."""
+        
+        # Initialize the Wikipedia tool
+        wikipedia_wrapper = WikipediaAPIWrapper()
         wikipedia_tool = Tool(
-            name='Wikipedia',
-            func=WikipediaAPIWrapper().run,
-            description="A tool for searching Wikipedia to find information on a topic."
+            name="Wikipedia",
+            func=wikipedia_wrapper.run,
+            description="A tool for searching the Internet to find various information on the topics mentioned."
         )
 
-        math_chain = LLMMathChain.from_llms(llm=self.llm)
-        calculator_tool = Tool(
+        # Initialize the math tool (calculator)
+        math_chain = LLMMathChain.from_llm(llm=self.llm)
+        calculator = Tool(
             name="Calculator",
             func=math_chain.run,
-            description="A tool for answering math-related questions. Only mathematical expressions need to be provided."
+            description="A tool for answering math-related questions. Only input mathematical expressions need to be provided."
         )
 
+        # Define the reasoning tool
         prompt = """
-        You are an agent tasked with solving users' mathematical questions. Logically arrive at the solution and provide a detailed explanation point-wise.
+        You're an agent tasked with solving users' mathematical questions. Logically arrive at the solution, provide a detailed explanation,
+        and display it point-wise for the question below.
         Question: {question}
         Answer:
         """
-        reasoning_prompt = PromptTemplate(input_variables=['question'], template=prompt)
-        reasoning_chain = LLMChain(llm=self.llm, prompt=reasoning_prompt)
-
+        prompt_template = PromptTemplate(input_variables=["question"], template=prompt)
+        chain = LLMChain(llm=self.llm, prompt=prompt_template)
+        
         reasoning_tool = Tool(
             name="Reasoning tool",
-            func=reasoning_chain.run,
+            func=chain.run,
             description="A tool for answering logic-based and reasoning questions."
         )
+        
+        return [wikipedia_tool, calculator, reasoning_tool]
 
-        return initialize_agent(
-            tools=[wikipedia_tool, calculator_tool, reasoning_tool],
+    def _setup_agent(self):
+        """Initializes and returns the LangChain agent."""
+        tools = self._setup_tools()
+        agent = initialize_agent(
+            tools=tools,
             llm=self.llm,
             agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
             verbose=False,
             handle_parsing_errors=True
         )
+        return agent
 
-    def _initialize_chat_history(self):
-        if "messages" not in st.session_state:
-            st.session_state["messages"] = [
-                {'role': "assistant", "content": "Hi, I'm a Math chatbot who can answer all your maths questions."}
-            ]
+    def _display_chat_history(self):
+        """Renders the chat messages from the session state."""
+        for msg in st.session_state.messages:
+            st.chat_message(msg["role"]).write(msg['content'])
 
-    def _render_chat_history(self):
-        for msg in st.session_state["messages"]:
-            st.chat_message(msg['role']).write(msg['content'])
-
-    def run(self):
-        self._render_chat_history()
-
-        question = st.text_area("Enter your question:", 
-                                "I have 5 bananas and 7 grapes. I eat 2 bananas and give away 3 grapes. Then I buy a dozen apples and 2 packs of blueberries. Each pack of blueberries contains 25 berries. How many total pieces of fruit do I have at the end?")
+    def _handle_user_input(self):
+        """Handles the user's input, agent response, and updates the chat history."""
+        question = st.text_area(
+            "Enter your question:",
+            "I have 5 bananas and 7 grapes. I eat 2 bananas and give away 3 grapes. Then I buy a dozen apples and 2 packs of blueberries. Each pack of blueberries contains 25 berries. How many total pieces of fruit do I have at the end?"
+        )
 
         if st.button("Find my answer"):
             if question:
                 with st.spinner("Generating response..."):
-                    st.session_state["messages"].append({"role": "user", "content": question})
+                    # Add user message to state and display it
+                    st.session_state.messages.append({"role": "user", "content": question})
                     st.chat_message("user").write(question)
 
-                    streamlit_callback = StreamlitCallbackHandler(st.container(), expand_new_thoughts=False)
-                    response = self.agent.run(st.session_state["messages"], callbacks=[streamlit_callback])
-
-                    st.session_state["messages"].append({"role": "assistant", "content": response})
-                    st.write("### Response:")
+                    # Get response from the agent
+                    st_cb = StreamlitCallbackHandler(st.container(), expand_new_thoughts=False)
+                    response = self.agent.run(st.session_state.messages, callbacks=[st_cb])
+                    
+                    # Add assistant message to state and display it
+                    st.session_state.messages.append({'role': 'assistant', "content": response})
+                    st.write('### Response:')
                     st.success(response)
             else:
-                st.warning("Please enter the question.")
+                st.warning("Please enter a question.")
 
+    def run(self):
+        """Main method to run the application."""
+        self._display_chat_history()
+        self._handle_user_input()
 
+# Main execution block
 if __name__ == "__main__":
     app = MathAssistantApp()
     app.run()
