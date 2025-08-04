@@ -1,0 +1,14 @@
+langchain
+langchain-groq
+langchain-community
+langchain-openai
+langchain-text-splitters
+langchain_chroma
+chromadb
+sentence_transformers
+duckduckgo_search==5.3.1b1
+openai
+pandas
+numexpr
+validators==0.28.1
+streamlit
